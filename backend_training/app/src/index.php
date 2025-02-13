@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php'; // 設定ファイルを読み込み
+require_once 'handlers/todos.php';
 
 // レスポンスのヘッダーを設定
 // JSON形式で返すためのヘッダー
@@ -8,14 +9,14 @@ header("Content-Type: application/json");
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Strip out query parameters by getting only the path
-$requestUri = $_SERVER['REQUEST_URI']; // This strips out the query string
+$requestUri = $_SERVER['REQUEST_URI'];
 
-// Now $requestUri will only have the path, and no query parameters
 global $pdo;
 
 $routes = [
     'GET' => [
         '#^/todos$#' => 'handleGetTodos',  // Match only `/todos` with no query params or other path
+        '#^/todos/(\d+)$#' => 'handleGetTodo',  // Match only `/todos` with no query params or other path
         '#^/health$#' => 'handleHealthCheck',
         // TODO: 他のエンドポイントを追加
     ],
@@ -31,15 +32,19 @@ $routes = [
 ];
 
 if (isset($routes[$method])) {
+    // リクエストメソッドに対応するエンドポイントを探す
     foreach ($routes[$method] as $pattern => $handler) {
         if (preg_match($pattern, $requestUri, $matches)) {
+            // 先頭要素(パターン全体にマッチした文字列)を削除する
             array_shift($matches);
+            // ハンドラを呼び出す
             call_user_func_array($handler, array_merge([$pdo], $matches));
             exit;
         }
     }
 }
 
+// エンドポイントが見つからない場合は404エラーを返す
 http_response_code(404);
 echo json_encode(['error' => 'Not Found']);
 exit;
@@ -70,33 +75,6 @@ function handleHealthCheck(PDO $pdo): void
         echo json_encode([
             'status' => 'error',
             'message' => 'Database connection failed',
-            'error' => $e->getMessage()
-        ]);
-    }
-    exit;
-}
-
-/**
- * `/todos` エンドポイントを処理します。
- *
- * @param PDO $pdo データベース接続のためのPDOインスタンス
- * @return void
- */
-function handleGetTodos(PDO $pdo): void
-{
-    try {
-        // データベースからTodoリストを取得
-        $stmt = $pdo->query("SELECT todos.id, todos.title, statuses.name FROM todos JOIN statuses ON todos.status_id = statuses.id;");
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // レスポンスを返却
-        echo json_encode(['status' => 'ok', 'data' => $result]);
-    } catch (Exception $e) {
-        // クエリエラー時のレスポンス
-        http_response_code(500);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Failed to get todos',
             'error' => $e->getMessage()
         ]);
     }

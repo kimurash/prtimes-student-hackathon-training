@@ -1,5 +1,6 @@
 <?php
 
+// 型を厳密にチェックする
 declare(strict_types=1);
 
 header('Content-Type: application/json');
@@ -24,6 +25,7 @@ function createPDO(array $config): PDO
 {
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $config['host'], $config['port'], $config['dbname']);
     $pdo = new PDO($dsn, $config['username'], $config['password']);
+    // エラーが発生した場合には例外を投げる
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $pdo;
 }
