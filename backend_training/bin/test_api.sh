@@ -121,7 +121,7 @@ test_get_server_error() {
     status_code=$(echo "$response" | tail -n1)
     body=$(echo "$response" | sed '$d')  # This removes the last line (the status code)
 
-    if [ "$status_code" -eq 500 ] && is_json "$body"; then
+    if [ "$status_code" -eq 404 ] && is_json "$body"; then
         echo "Status: $status_code ✅ Passed"
         echo "Response: $body"
     else

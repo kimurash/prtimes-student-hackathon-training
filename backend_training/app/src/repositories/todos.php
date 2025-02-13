@@ -79,3 +79,17 @@ function updateTodo(PDO $pdo, string $todoId, array $data): array
     // 更新されたTodoを返却
     return getTodo($pdo, $todoId);
 }
+
+function deleteTodo(PDO $pdo, string $todoId): array
+{
+    $todo = getTodo($pdo, $todoId);
+    if (empty($todo)) {
+        return [];
+    }
+
+    $stmt = $pdo->prepare("DELETE FROM todos WHERE id = :todoId;");
+    $stmt->bindParam(':todoId', $todoId, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $todo;
+}

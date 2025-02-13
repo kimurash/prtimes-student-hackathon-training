@@ -40,7 +40,7 @@ function handleGetTodo(PDO $pdo, string $todoId): void
             http_response_code(404);
             echo json_encode([
                 'status' => 'error',
-                'message' => 'Todoが見つかりません',
+                'message' => 'Todo not found',
             ]);
         } else {
             echo json_encode(['status' => 'ok', 'data' => [$todo]]);
@@ -161,6 +161,44 @@ function handlePutTodo(PDO $pdo): void
         ]);
     }
     exit;
+}
+
+function handleDeleteTodo(PDO $pdo): void
+{
+    // クエリパラメータから Todo ID を取得
+    $todoId = $_GET['id'] ?? null;
+
+    // Todo ID がない場合はエラー
+    if ($todoId === null) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID is required in query parameters.'
+        ]);
+        exit;
+    }
+
+    try{
+        $deletedTodo = deleteTodo($pdo, $todoId);
+
+        if(empty($deletedTodo)){
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Todo not found.'
+            ]);
+        } else {
+            http_response_code(200);
+            echo json_encode(['status' => 'ok', 'data' => [$deletedTodo]]);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo deletion failed',
+            'error' => $e->getMessage()
+        ]);
+    }
 }
 
 /**
