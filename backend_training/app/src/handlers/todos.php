@@ -63,3 +63,61 @@ function handleGetTodo(PDO $pdo, string $todoId): void
     }
     exit;
 }
+
+function handlePostTodo(PDO $pdo): void
+{
+    // リクエストボディから JSON データを取得
+    $requestBody = file_get_contents('php://input');
+    $todo = json_decode($requestBody, true); // true を指定して連想配列としてデコード
+
+    // JSON デコードに失敗した場合
+    if($todo === null){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request body'
+        ]);
+        exit;
+    }
+
+    // title が存在しない場合はエラー
+    if (!isset($todo['title'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => '"title" is required.'
+        ]);
+        exit;
+    }
+
+    $title = $todo['title'];
+
+    try {
+        // データベースに新しいTodoを登録
+        $sql = "INSERT INTO todos (title, status_id) VALUES (:title, 1)"; // status_id はデフォルトで 1 (未完了)
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':title' => $title]);
+
+        // 作成されたTodoの ID を取得
+        $todoId = $pdo->lastInsertId();
+
+        http_response_code(201);
+        echo json_encode([
+            'status' => 'ok', 
+            'data' => [[
+                'id' => $todoId,
+                'title' => $title,
+                'status' => 'pending'
+            ]]
+        ]);
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo creation failed',
+            'error' => $e->getMessage()
+        ]);
+    }
+    exit;
+}

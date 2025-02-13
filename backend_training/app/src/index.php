@@ -16,12 +16,11 @@ global $pdo;
 $routes = [
     'GET' => [
         '#^/todos$#' => 'handleGetTodos',  // Match only `/todos` with no query params or other path
-        '#^/todos/(\d+)$#' => 'handleGetTodo',  // Match only `/todos` with no query params or other path
+        '#^/todos/(\d+)$#' => 'handleGetTodo',
         '#^/health$#' => 'handleHealthCheck',
-        // TODO: 他のエンドポイントを追加
     ],
     'POST' => [
-        // TODO: 他のエンドポイントを追加
+        '#^/todos$#' => 'handlePostTodo',
     ],
     'PUT' => [
         // TODO: 他のエンドポイントを追加
