@@ -23,7 +23,7 @@ $routes = [
         '#^/todos$#' => 'handlePostTodo',
     ],
     'PUT' => [
-        // TODO: 他のエンドポイントを追加
+        '#^/todos\?id=(\d+)$#' => 'handlePutTodo',
     ],
     'DELETE' => [
         // TODO: 他のエンドポイントを追加

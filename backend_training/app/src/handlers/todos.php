@@ -1,6 +1,9 @@
 <?php
+require_once(__DIR__ . '/../repositories/todos.php');
+require_once(__DIR__ . '/../repositories/statuses.php');
+
 /**
- * `/todos` エンドポイントを処理します。
+ * GET `/todos` を処理します。
  *
  * @param PDO $pdo データベース接続のためのPDOインスタンス
  * @return void
@@ -8,14 +11,9 @@
 function handleGetTodos(PDO $pdo): void
 {
     try {
-        // データベースからTodoリストを取得
-        $stmt = $pdo->query("SELECT todos.id, todos.title, statuses.name FROM todos JOIN statuses ON todos.status_id = statuses.id;");
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // レスポンスを返却
-        echo json_encode(['status' => 'ok', 'data' => $result]);
+        $todos = getAllTodos($pdo);
+        echo json_encode(['status' => 'ok', 'data' => $todos]);
     } catch (Exception $e) {
-        // クエリエラー時のレスポンス
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
@@ -27,7 +25,7 @@ function handleGetTodos(PDO $pdo): void
 }
 
 /**
- * `/todos/{id}` エンドポイントを処理します。
+ * GET `/todos/{id}` を処理します。
  *
  * @param PDO $pdo データベース接続のためのPDOインスタンス
  * @param string $todoId Todo の ID
@@ -36,52 +34,41 @@ function handleGetTodos(PDO $pdo): void
 function handleGetTodo(PDO $pdo, string $todoId): void
 {
     try {
-        // 指定されたIDのTodoを取得
-        $stmt = $pdo->prepare("SELECT todos.id, todos.title, statuses.name FROM todos JOIN statuses ON todos.status_id = statuses.id WHERE todos.id = :todoId;");
-        $stmt->bindParam(':todoId', $todoId, PDO::PARAM_INT);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $todo = getTodo($pdo, $todoId);
 
-        if(empty($result)){
+        if(empty($todo)){
             http_response_code(404);
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Todoが見つかりません',
             ]);
-        } else{
-            // レスポンスを返却
-            echo json_encode(['status' => 'ok', 'data' => [$result]]);
+        } else {
+            echo json_encode(['status' => 'ok', 'data' => [$todo]]);
         }
     } catch (Exception $e) {
-        // クエリエラー時のレスポンス
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Failed to get todos',
+            'message' => 'Failed to get todo',
             'error' => $e->getMessage()
         ]);
     }
     exit;
 }
 
+/**
+ * POST `/todos` を処理します。
+ *
+ * @param PDO $pdo データベース接続のためのPDOインスタンス
+ * @return void
+ */
 function handlePostTodo(PDO $pdo): void
 {
     // リクエストボディから JSON データを取得
-    $requestBody = file_get_contents('php://input');
-    $todo = json_decode($requestBody, true); // true を指定して連想配列としてデコード
+    $reqBody = getRequestBody();
 
-    // JSON デコードに失敗した場合
-    if($todo === null){
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Invalid request body'
-        ]);
-        exit;
-    }
-
-    // title が存在しない場合はエラー
-    if (!isset($todo['title'])) {
+    // title が含まれていない場合
+    if (!isset($reqBody['title'])) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
@@ -90,34 +77,110 @@ function handlePostTodo(PDO $pdo): void
         exit;
     }
 
-    $title = $todo['title'];
-
     try {
-        // データベースに新しいTodoを登録
-        $sql = "INSERT INTO todos (title, status_id) VALUES (:title, 1)"; // status_id はデフォルトで 1 (未完了)
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':title' => $title]);
+        // "pending" の ID を取得
+        $pendingStatus = getStatus($pdo, 'pending');
+        $reqBody['status_id'] = $pendingStatus['id'];
 
-        // 作成されたTodoの ID を取得
-        $todoId = $pdo->lastInsertId();
+        // データベースに新しいTodoを登録
+        $newTodo = createTodo($pdo, $reqBody);
 
         http_response_code(201);
-        echo json_encode([
-            'status' => 'ok', 
-            'data' => [[
-                'id' => $todoId,
-                'title' => $title,
-                'status' => 'pending'
-            ]]
-        ]);
-
+        echo json_encode(['status' => 'ok', 'data' => [$newTodo]]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Todo creation failed',
+            'message' => 'Todo creation failed.',
             'error' => $e->getMessage()
         ]);
     }
     exit;
+}
+
+/**
+ * PUT `/todos?id={id}` を処理します。
+ * 
+ * @param PDO $pdo データベース接続のためのPDOインスタンス
+ * @return void
+ */
+function handlePutTodo(PDO $pdo): void
+{
+    // クエリパラメータから Todo ID を取得
+    $todoId = $_GET['id'] ?? null;
+
+    // Todo ID がない場合はエラー
+    if ($todoId === null) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID is required in query parameters.'
+        ]);
+        exit;
+    }
+
+    // リクエストボディから JSON データを取得
+    $reqBody = getRequestBody();
+
+    // 更新するデータがない場合
+    // HACK: todos テーブルのカラム増加に伴って記述量が増える
+    if (!isset($reqBody['title']) && !isset($reqBody['status'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => '"title" or "status" is expected.'
+        ]);
+        exit;
+    }
+
+    $status = getStatus($pdo, $reqBody['status'] ?? null);
+
+    try {
+        $data = [
+            'title' => $reqBody['title'] ?? null,
+            'status_id' => $status['id'] ?? null
+        ];
+        $updatedTodo = updateTodo($pdo, $todoId, $data);
+
+        if(empty($updatedTodo)){
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Todo not found.'
+            ]);
+        } else {
+            http_response_code(200);
+            echo json_encode(['status' => 'ok', 'data' => [$updatedTodo]]);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo update failed',
+            'error' => $e->getMessage()
+        ]);
+    }
+    exit;
+}
+
+/**
+ * リクエストボディを取得する
+ * 
+ * @return array リクエストボディの連想配列
+ */
+function getRequestBody(): array
+{
+    $reqBody = file_get_contents('php://input');
+    $data = json_decode($reqBody, true);
+
+    if($data === null){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Invalid request body'
+        ]);
+        exit;
+    }
+
+    return $data;
 }
