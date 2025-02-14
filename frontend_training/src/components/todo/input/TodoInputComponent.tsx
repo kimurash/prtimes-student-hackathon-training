@@ -17,7 +17,6 @@ export const TodoInputComponent = (
         type="text"
         value={todoTitle}
         onChange={(event) => {
-          console.log(event.target.value)
           setTodoTitle(event.target.value)
         }}
         placeholder="タスクを入力してください"
@@ -28,7 +27,7 @@ export const TodoInputComponent = (
           const todo = {
             id: uuidv4(),
             title: todoTitle,
-            status: "pending" as const,
+            isCompleted: false,
           };
           appendTodo(todo);
           setTodoTitle("");
