@@ -136,6 +136,16 @@ function handlePutTodo(PDO $pdo): void
         exit;
     }
 
+    // Todo ID が数字でない場合はエラー
+    if(!is_numeric($todoId)){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID must be a number.'
+        ]);
+        exit;
+    }
+
     // リクエストボディから JSON データを取得
     $reqBody = getRequestBody();
 
@@ -199,6 +209,16 @@ function handleDeleteTodo(PDO $pdo): void
         echo json_encode([
             'status' => 'error',
             'message' => 'Todo ID is required in query parameters.'
+        ]);
+        exit;
+    }
+
+    // Todo ID が数字でない場合はエラー
+    if(!is_numeric($todoId)){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID must be a number.'
         ]);
         exit;
     }

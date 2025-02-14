@@ -25,7 +25,7 @@ function getAllTodos(PDO $pdo): array
 function getTodo(PDO $pdo, string $todoId): array
 {
     $stmt = $pdo->prepare("SELECT todos.id, todos.title, statuses.name AS status FROM todos JOIN statuses ON todos.status_id = statuses.id WHERE todos.id = :todoId;");
-    $stmt->bindParam(':todoId', $todoId, PDO::PARAM_INT);
+    $stmt->bindValue(':todoId', (int)$todoId, PDO::PARAM_INT);
     $stmt->execute();
     $todo = $stmt->fetch(PDO::FETCH_ASSOC);
     return $todo ? $todo : [];
@@ -41,10 +41,9 @@ function getTodo(PDO $pdo, string $todoId): array
 function createTodo(PDO $pdo, array $data): array
 {
     $stmt = $pdo->prepare("INSERT INTO todos (title, status_id) VALUES (:title, :status_id);");
-    $stmt->execute([
-        ':title' => $data['title'],
-        ':status_id' => $data['status_id']
-    ]);
+    $stmt->bindValue(':title', $data['title'], PDO::PARAM_STR);
+    $stmt->bindValue(':status_id', (int)$data['status_id'], PDO::PARAM_INT);
+    $stmt->execute();
 
     $todoId = $pdo->lastInsertId();
     return getTodo($pdo, $todoId);
@@ -72,8 +71,8 @@ function updateTodo(PDO $pdo, string $todoId, array $data): array
     $setClause = implode(", ", $setParts);
 
     // データベースのTodoを更新
-    $stmt = $pdo->prepare("UPDATE todos SET {$setClause} WHERE id = :id");
-    $params[':id'] = $todoId;
+    $stmt = $pdo->prepare("UPDATE todos SET {$setClause} WHERE id = :todoId");
+    $params[':todoId'] = $todoId;
     $stmt->execute($params);
 
     // 更新されたTodoを返却
@@ -88,7 +87,7 @@ function deleteTodo(PDO $pdo, string $todoId): array
     }
 
     $stmt = $pdo->prepare("DELETE FROM todos WHERE id = :todoId;");
-    $stmt->bindParam(':todoId', $todoId, PDO::PARAM_INT);
+    $stmt->bindValue(':todoId', (int)$todoId, PDO::PARAM_INT);
     $stmt->execute();
 
     return $todo;
