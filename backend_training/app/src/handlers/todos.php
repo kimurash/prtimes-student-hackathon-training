@@ -1,9 +1,8 @@
 <?php
+declare(strict_types=1);
+
 require_once(__DIR__ . '/../repositories/todos.php');
 require_once(__DIR__ . '/../repositories/statuses.php');
-
-// 型を厳密にチェックする
-declare(strict_types=1);
 
 /**
  * GET `/todos` を処理します。
