@@ -135,12 +135,12 @@ function handlePutTodo(PDO $pdo): void
         exit;
     }
 
-    $status = getStatus($pdo, $reqBody['status'] ?? null);
+    $status = $reqBody['status'] ? getStatus($pdo, $reqBody['status']) : null;
 
     try {
         $data = [
             'title' => $reqBody['title'] ?? null,
-            'status_id' => $status['id'] ?? null
+            'status_id' => $status ? $status['id'] : null
         ];
         $updatedTodo = updateTodo($pdo, $todoId, $data);
 
