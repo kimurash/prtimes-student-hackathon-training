@@ -15,6 +15,7 @@ require_once(__DIR__ . '/../models/request/TodoRequestData.php');
  */
 function handleGetTodos(PDO $pdo): void
 {
+    header('Content-Type: application/json');
     try {
         $todos = getAllTodos($pdo);
         echo json_encode(['status' => 'ok', 'data' => $todos]);
@@ -38,6 +39,7 @@ function handleGetTodos(PDO $pdo): void
  */
 function handleGetTodo(PDO $pdo, string $todoId): void
 {
+    header('Content-Type: application/json');
     try {
         $todo = getTodo($pdo, $todoId);
 
@@ -69,6 +71,9 @@ function handleGetTodo(PDO $pdo, string $todoId): void
  */
 function handlePostTodo(PDO $pdo): void
 {
+    // レスポンスヘッダーを設定
+    header('Content-Type: application/json');
+
     // リクエストボディから JSON データを取得
     $reqBody = getRequestBody();
 
@@ -115,6 +120,9 @@ function handlePostTodo(PDO $pdo): void
  */
 function handlePutTodo(PDO $pdo): void
 {
+    // レスポンスヘッダーを設定
+    header('Content-Type: application/json');
+
     // クエリパラメータから Todo ID を取得
     $todoId = $_GET['id'] ?? null;
 
@@ -179,6 +187,9 @@ function handlePutTodo(PDO $pdo): void
 
 function handleDeleteTodo(PDO $pdo): void
 {
+    // レスポンスヘッダーを設定
+    header('Content-Type: application/json');
+
     // クエリパラメータから Todo ID を取得
     $todoId = $_GET['id'] ?? null;
 
