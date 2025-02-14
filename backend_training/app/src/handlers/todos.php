@@ -1,8 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 require_once(__DIR__ . '/../repositories/todos.php');
 require_once(__DIR__ . '/../repositories/statuses.php');
+
+require_once(__DIR__ . '/../models/request/TodoRequestData.php');
 
 /**
  * GET `/todos` を処理します。
@@ -69,8 +72,9 @@ function handlePostTodo(PDO $pdo): void
     // リクエストボディから JSON データを取得
     $reqBody = getRequestBody();
 
-    // title が含まれていない場合
-    if (!isset($reqBody['title'])) {
+    // リクエストボディのバリデーション
+    $todoData = new TodoRequestData($reqBody);
+    if(!$todoData->validateTitle()){
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
@@ -78,14 +82,17 @@ function handlePostTodo(PDO $pdo): void
         ]);
         exit;
     }
+    
+    // バリデーション済みのデータを取得
+    $validTodoData = $todoData->getTodoData();
 
     try {
         // "pending" の ID を取得
         $pendingStatus = getStatus($pdo, 'pending');
-        $reqBody['status_id'] = $pendingStatus['id'];
+        $validTodoData['status_id'] = $pendingStatus['id'];
 
         // データベースに新しいTodoを登録
-        $newTodo = createTodo($pdo, $reqBody);
+        $newTodo = createTodo($pdo, $validTodoData);
 
         http_response_code(201);
         echo json_encode(['status' => 'ok', 'data' => [$newTodo]]);
@@ -124,33 +131,38 @@ function handlePutTodo(PDO $pdo): void
     // リクエストボディから JSON データを取得
     $reqBody = getRequestBody();
 
-    // 更新するデータがない場合
-    // HACK: todos テーブルのカラム増加に伴って記述量が増える
-    if (!isset($reqBody['title']) && !isset($reqBody['status'])) {
+    // リクエストボディのバリデーション
+    $todoData = new TodoRequestData($reqBody);
+    if(!$todoData->isAtLeastOneValid()){
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
-            'message' => '"title" or "status" is expected.'
+            'message' => 'At least one property must be valid'
         ]);
         exit;
     }
 
-    $status = $reqBody['status'] ? getStatus($pdo, $reqBody['status']) : null;
+    // バリデーション済みのデータを取得
+    $validTodoData = $todoData->getTodoData();
 
     try {
-        $data = [
-            'title' => $reqBody['title'] ?? null,
-            'status_id' => $status ? $status['id'] : null
-        ];
-        $updatedTodo = updateTodo($pdo, $todoId, $data);
+        if(isset($validTodoData['status'])){ // ステータスを更新する場合
+            // ステータスのIDを取得
+            $status = getStatus($pdo, $validTodoData['status']);
+            $validTodoData['status_id'] = $status['id'];
+            unset($validTodoData['status']);
+        }
 
-        if(empty($updatedTodo)){
+        // データベースのTodoを更新
+        $updatedTodo = updateTodo($pdo, $todoId, $validTodoData);
+
+        if(empty($updatedTodo)){ // 更新されたTodoがない場合
             http_response_code(404);
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Todo not found.'
             ]);
-        } else {
+        } else { // 無事に更新された場合
             http_response_code(200);
             echo json_encode(['status' => 'ok', 'data' => [$updatedTodo]]);
         }
@@ -181,15 +193,16 @@ function handleDeleteTodo(PDO $pdo): void
     }
 
     try{
+        // データベースのTodoを削除
         $deletedTodo = deleteTodo($pdo, $todoId);
 
-        if(empty($deletedTodo)){
+        if(empty($deletedTodo)){ // 削除されたTodoがない場合
             http_response_code(404);
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Todo not found.'
             ]);
-        } else {
+        } else { // 無事に削除された場合
             http_response_code(200);
             echo json_encode(['status' => 'ok', 'data' => [$deletedTodo]]);
         }

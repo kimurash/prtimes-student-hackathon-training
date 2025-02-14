@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * ステータスの名前からIDを取得します。
  * 

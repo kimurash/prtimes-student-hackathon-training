@@ -1,6 +1,6 @@
 <?php
 
-
+declare(strict_types=1);
 
 /**
  * 全てのTODOを取得します。
@@ -10,7 +10,7 @@
  */
 function getAllTodos(PDO $pdo): array
 {
-    $stmt = $pdo->query("SELECT todos.id, todos.title, statuses.name FROM todos JOIN statuses ON todos.status_id = statuses.id;");
+    $stmt = $pdo->query("SELECT todos.id, todos.title, statuses.name AS status FROM todos JOIN statuses ON todos.status_id = statuses.id;");
     $todos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return $todos;
 }

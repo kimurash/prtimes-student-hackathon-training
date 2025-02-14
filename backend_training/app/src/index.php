@@ -1,6 +1,6 @@
 <?php
-require_once 'config.php'; // 設定ファイルを読み込み
-require_once 'handlers/todos.php';
+require_once('config.php');
+require_once('handlers/todos.php');
 
 // レスポンスのヘッダーを設定
 // JSON形式で返すためのヘッダー
