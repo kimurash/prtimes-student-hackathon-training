@@ -227,6 +227,8 @@ function getRequestBody(): array
     $data = json_decode($reqBody, true);
 
     if($data === null){
+        logJSONError();
+
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
@@ -236,4 +238,11 @@ function getRequestBody(): array
     }
 
     return $data;
+}
+
+function logJSONError(): void
+{
+    $err_code = json_last_error();
+    $err_msg = json_last_error_msg();
+    error_log("JSON_ERROR({$err_code}): {$err_msg}");
 }
