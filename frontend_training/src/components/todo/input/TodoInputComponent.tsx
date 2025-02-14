@@ -11,9 +11,9 @@ export const TodoInputComponent = (
   const [todoTitle, setTodoTitle] = useState<string>("")
 
   return (
-    <div className="flex justify-center my-4">
+    <div className="flex justify-center mt-6 mb-3">
       <input
-        className="border w-md p-2 mr-2"
+        className="border w-lg p-2 mr-2"
         type="text"
         value={todoTitle}
         onChange={(event) => {
@@ -22,12 +22,13 @@ export const TodoInputComponent = (
         placeholder="タスクを入力してください"
       />
       <button
-        className="rounded-md bg-neutral-950 px-6 font-medium text-neutral-50 transition"
+        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-5 py-2.5 focus:outline-none"
         onClick={() => {
           const todo = {
             id: uuidv4(),
             title: todoTitle,
             isCompleted: false,
+            isEditing: false,
           };
           appendTodo(todo);
           setTodoTitle("");

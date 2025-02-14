@@ -12,15 +12,21 @@ function App() {
     });
   };
 
-  const toggleCompleted = (todoId: string) => {
+  const updateTodo = (todoId: string, newTodo: Todo) => {
     setTodos((prevTodos) => {
-      return prevTodos.map((todo) => {
-        if (todo.id === todoId) {
-          return { ...todo, isCompleted: !todo.isCompleted };
-        } else{
-          return todo;
+      return prevTodos.map((prevTodo) => {
+        if (prevTodo.id === todoId) {
+          return newTodo;
+        } else {
+          return prevTodo;
         }
       });
+    });
+  };
+
+  const removeTodo = (todoId: string) => {
+    setTodos((prevTodos) => {
+      return prevTodos.filter((prevTodo) => prevTodo.id !== todoId);
     });
   };
 
@@ -28,7 +34,7 @@ function App() {
     <>
       <h1 className="text-3xl">TODOアプリ</h1>
       <TodoInputComponent appendTodo={appendTodo} />
-      <TodoListComponent todos={todos} toggleCompleted={toggleCompleted} />
+      <TodoListComponent todos={todos} updateTodo={updateTodo} removeTodo={removeTodo} />
     </>
   );
 }
