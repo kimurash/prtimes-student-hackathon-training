@@ -1,29 +1,14 @@
 import { useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface TodoInputComponentProps {
-  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
+  appendTodo: (todo: Todo) => void;
 }
 
 export const TodoInputComponent = (
-  { setTodos }: TodoInputComponentProps
+  { appendTodo }: TodoInputComponentProps
 ) => {
   const [todoTitle, setTodoTitle] = useState<string>("")
-
-  const handleAddButtonClick = () => {
-    if(0 <= todoTitle.length){
-      setTodos((prevTodos) => {
-        return [
-          ...prevTodos,
-          {
-            title: todoTitle,
-            status: "pending"
-          }
-        ]
-      })
-
-      console.log("Todo added")
-    }
-  };
 
   return (
     <div className="flex justify-center my-4">
@@ -39,7 +24,15 @@ export const TodoInputComponent = (
       />
       <button
         className="rounded-md bg-neutral-950 px-6 font-medium text-neutral-50 transition"
-        onClick={handleAddButtonClick}
+        onClick={() => {
+          const todo = {
+            id: uuidv4(),
+            title: todoTitle,
+            status: "pending" as const,
+          };
+          appendTodo(todo);
+          setTodoTitle("");
+        }}
       >
         追加
       </button>
