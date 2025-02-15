@@ -24,6 +24,11 @@ export const TodoInputComponent = (
       <button
         className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-5 py-2.5 focus:outline-none"
         onClick={() => {
+          if(todoTitle === ""){
+            alert("タスクを入力してください");
+            return;
+          }
+          
           const todo = {
             id: uuidv4(),
             title: todoTitle,
