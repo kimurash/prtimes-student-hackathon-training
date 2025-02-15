@@ -41,7 +41,7 @@ function handleGetTodo(PDO $pdo, string $todoId): void
 {
     header('Content-Type: application/json');
     try {
-        $todo = getTodo($pdo, $todoId);
+        $todo = getTodo($pdo, (int)$todoId);
 
         if(empty($todo)){
             http_response_code(404);
@@ -124,27 +124,7 @@ function handlePutTodo(PDO $pdo): void
     header('Content-Type: application/json');
 
     // クエリパラメータから Todo ID を取得
-    $todoId = $_GET['id'] ?? null;
-
-    // Todo ID がない場合はエラー
-    if ($todoId === null) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Todo ID is required in query parameters.'
-        ]);
-        exit;
-    }
-
-    // Todo ID が数字でない場合はエラー
-    if(!is_numeric($todoId)){
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Todo ID must be a number.'
-        ]);
-        exit;
-    }
+    $todoId = getTodoIdFromQuery();
 
     // リクエストボディから JSON データを取得
     $reqBody = getRequestBody();
@@ -172,7 +152,7 @@ function handlePutTodo(PDO $pdo): void
         }
 
         // データベースのTodoを更新
-        $updatedTodo = updateTodo($pdo, $todoId, $validTodoData);
+        $updatedTodo = updateTodo($pdo, (int)$todoId, $validTodoData);
 
         if(empty($updatedTodo)){ // 更新されたTodoがない場合
             http_response_code(404);
@@ -201,31 +181,11 @@ function handleDeleteTodo(PDO $pdo): void
     header('Content-Type: application/json');
 
     // クエリパラメータから Todo ID を取得
-    $todoId = $_GET['id'] ?? null;
-
-    // Todo ID がない場合はエラー
-    if ($todoId === null) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Todo ID is required in query parameters.'
-        ]);
-        exit;
-    }
-
-    // Todo ID が数字でない場合はエラー
-    if(!is_numeric($todoId)){
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Todo ID must be a number.'
-        ]);
-        exit;
-    }
+    $todoId = getTodoIdFromQuery();
 
     try{
         // データベースのTodoを削除
-        $deletedTodo = deleteTodo($pdo, $todoId);
+        $deletedTodo = deleteTodo($pdo, (int)$todoId);
 
         if(empty($deletedTodo)){ // 削除されたTodoがない場合
             http_response_code(404);
@@ -258,7 +218,9 @@ function getRequestBody(): array
     $data = json_decode($reqBody, true);
 
     if($data === null){
-        logJSONError();
+        $err_code = json_last_error();
+        $err_msg = json_last_error_msg();
+        error_log("JSON_ERROR({$err_code}): {$err_msg}");
 
         http_response_code(400);
         echo json_encode([
@@ -271,9 +233,34 @@ function getRequestBody(): array
     return $data;
 }
 
-function logJSONError(): void
+/**
+ * クエリパラメータからTodo IDを取得する
+ * 
+ * @return int Todo ID
+ */
+function getTodoIdFromQuery(): int
 {
-    $err_code = json_last_error();
-    $err_msg = json_last_error_msg();
-    error_log("JSON_ERROR({$err_code}): {$err_msg}");
+    $todoId = $_GET['id'] ?? null;
+
+    // Todo ID がない場合はエラー
+    if($todoId === null){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID is required in query parameters.'
+        ]);
+        exit;
+    }
+
+    // Todo ID が数字でない場合はエラー
+    if(!is_numeric($todoId)){
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Todo ID must be a number.'
+        ]);
+        exit;
+    }
+
+    return (int)$todoId;
 }

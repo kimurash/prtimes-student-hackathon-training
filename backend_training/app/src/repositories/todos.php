@@ -19,13 +19,13 @@ function getAllTodos(PDO $pdo): array
  * 指定されたIDのTODOを取得します。
  * 
  * @param PDO $pdo データベース接続のためのPDOインスタンス
- * @param string $todoId TODOのID
+ * @param int $todoId TODOのID
  * @return array TODOの連想配列
  */
-function getTodo(PDO $pdo, string $todoId): array
+function getTodo(PDO $pdo, int $todoId): array
 {
     $stmt = $pdo->prepare("SELECT todos.id, todos.title, statuses.name AS status FROM todos JOIN statuses ON todos.status_id = statuses.id WHERE todos.id = :todoId;");
-    $stmt->bindValue(':todoId', (int)$todoId, PDO::PARAM_INT);
+    $stmt->bindValue(':todoId', $todoId, PDO::PARAM_INT);
     $stmt->execute();
     $todo = $stmt->fetch(PDO::FETCH_ASSOC);
     return $todo ? $todo : [];
@@ -46,18 +46,18 @@ function createTodo(PDO $pdo, array $data): array
     $stmt->execute();
 
     $todoId = $pdo->lastInsertId();
-    return getTodo($pdo, $todoId);
+    return getTodo($pdo, (int)$todoId);
 }
 
 /**
  * TODOを更新します。
  * 
  * @param PDO $pdo データベース接続のためのPDOインスタンス
- * @param string $todoId TODOのID
+ * @param int $todoId TODOのID
  * @param array $data 更新するTODOのデータ
  * @return array 更新されたTODOの連想配列
  */
-function updateTodo(PDO $pdo, string $todoId, array $data): array
+function updateTodo(PDO $pdo, int $todoId, array $data): array
 {
     // SET句を組み立てる
     $setParts = [];
@@ -79,7 +79,14 @@ function updateTodo(PDO $pdo, string $todoId, array $data): array
     return getTodo($pdo, $todoId);
 }
 
-function deleteTodo(PDO $pdo, string $todoId): array
+/**
+ * TODOを削除します。
+ * 
+ * @param PDO $pdo データベース接続のためのPDOインスタンス
+ * @param int $todoId TODOのID
+ * @return array 削除されたTODOの連想配列
+ */
+function deleteTodo(PDO $pdo, int $todoId): array
 {
     $todo = getTodo($pdo, $todoId);
     if (empty($todo)) {
