@@ -10,7 +10,16 @@ declare(strict_types=1);
  */
 function getAllTodos(PDO $pdo): array
 {
-    $stmt = $pdo->query("SELECT todos.id, todos.title, statuses.name AS status FROM todos JOIN statuses ON todos.status_id = statuses.id;");
+    $stmt = $pdo->query("
+        SELECT
+            todos.id,
+            todos.title,
+            statuses.name AS status
+        FROM
+            todos
+            JOIN statuses
+                ON todos.status_id = statuses.id
+    ");
     $todos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return $todos;
 }
@@ -24,7 +33,18 @@ function getAllTodos(PDO $pdo): array
  */
 function getTodo(PDO $pdo, int $todoId): array
 {
-    $stmt = $pdo->prepare("SELECT todos.id, todos.title, statuses.name AS status FROM todos JOIN statuses ON todos.status_id = statuses.id WHERE todos.id = :todoId;");
+    $stmt = $pdo->prepare("
+        SELECT
+            todos.id,
+            todos.title,
+            statuses.name AS status
+        FROM
+            todos
+            JOIN statuses
+                ON todos.status_id = statuses.id
+        WHERE
+            todos.id = :todoId
+    ");
     $stmt->bindValue(':todoId', $todoId, PDO::PARAM_INT);
     $stmt->execute();
     $todo = $stmt->fetch(PDO::FETCH_ASSOC);
