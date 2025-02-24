@@ -1,62 +1,27 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
+import { fetchTodos } from "./api/todo";
 import "./App.css";
 import TodoInputComponent from "./components/todo/input/TodoInputComponent";
 import TodoListComponent from "./components/todo/list/TodoListComponent";
+import { useTodoStore } from "./stores/todos";
 
 function App() {
-  const ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
-  const [todos, setTodos] = useState<Todo[]>([]);
-
-  const fetchTodos = useCallback(async () => {
-    // prettier-ignore
-    const response = await fetch(
-      `${ENDPOINT}/todos`,
-      {
-        method: "GET"
-      }
-    );
-    const resBody: {
-      status: string;
-      data: Omit<Todo, "isEditing">[];
-    } = await response.json();
-    // prettier-ignore
-    const todos = resBody.data.map(
-      (todo) => {
-        return { ...todo, isEditing: false };
-      }
-    );
-
-    setTodos(todos);
-  }, []);
+  const { setTodoState } = useTodoStore();
 
   useEffect(() => {
     const initialFetchTodos = async () => {
-      await fetchTodos();
+      const todos = await fetchTodos();
+      setTodoState(todos);
     };
+
     initialFetchTodos();
   }, []);
-
-  const updateTodo = (todoId: number, newTodo: Todo) => {
-    setTodos((prevTodos) => {
-      return prevTodos.map((prevTodo) => {
-        if (prevTodo.id === todoId) {
-          return newTodo;
-        } else {
-          return prevTodo;
-        }
-      });
-    });
-  };
 
   return (
     <>
       <h1 className="text-3xl">TODOアプリ</h1>
-      <TodoInputComponent fetchTodos={fetchTodos} />
-      <TodoListComponent
-        todos={todos}
-        fetchTodos={fetchTodos}
-        updateTodo={updateTodo}
-      />
+      <TodoInputComponent />
+      <TodoListComponent />
     </>
   );
 }

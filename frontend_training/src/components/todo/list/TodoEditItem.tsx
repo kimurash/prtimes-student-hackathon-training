@@ -1,35 +1,32 @@
+import { fetchTodo, updateTodo } from "@/api/todo";
+import { useTodoStore } from "@/stores/todos";
 import { useState } from "react";
 
-interface TodoEditItemProps {
-  todo: Todo;
-  fetchTodos: () => Promise<void>;
-  updateTodo: (todoId: number, newTodo: Todo) => void;
-}
-
-const TodoEditItem = ({ todo, fetchTodos, updateTodo }: TodoEditItemProps) => {
-  const ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+const TodoEditItem = ({ todo }: { todo: Todo }) => {
+  const { updateTodoState } = useTodoStore();
   const [todoTitle, setTodoTitle] = useState<string>(todo.title);
+
+  const handleCancelButtonClick = () => {
+    const newTodo = { ...todo, isEditing: false };
+    updateTodoState(todo.id, newTodo);
+  };
 
   const handleUpdateButtonClick = async () => {
     const newTodo = { ...todo, title: todoTitle };
 
-    // prettier-ignore
-    const response = await fetch(
-      `${ENDPOINT}/todos?id=${todo.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newTodo),
-      }
-    );
-    if (!response.ok) {
+    const success = await updateTodo(todo.id, newTodo);
+    if (!success) {
       alert("タスクを更新できませんでした");
       return;
     }
 
-    await fetchTodos();
+    const updatedTodo = await fetchTodo(todo.id);
+    if (updatedTodo === null) {
+      alert("タスクを取得できませんでした");
+      return;
+    }
+
+    updateTodoState(todo.id, updatedTodo);
   };
 
   return (
@@ -46,10 +43,7 @@ const TodoEditItem = ({ todo, fetchTodos, updateTodo }: TodoEditItemProps) => {
       <button
         type="button"
         className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg px-5 py-2 me-2"
-        onClick={() => {
-          const newTodo = { ...todo, isEditing: false };
-          updateTodo(todo.id, newTodo);
-        }}
+        onClick={handleCancelButtonClick}
       >
         キャンセル
       </button>

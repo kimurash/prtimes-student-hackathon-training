@@ -1,51 +1,49 @@
-interface TodoItemProps {
-  todo: Todo;
-  fetchTodos: () => Promise<void>;
-  updateTodo: (todoId: number, newTodo: Todo) => void;
-}
+import { deleteTodo, fetchTodo, fetchTodos, updateTodo } from "@/api/todo";
+import { useTodoStore } from "@/stores/todos";
 
-const TodoItem = ({ todo, fetchTodos, updateTodo }: TodoItemProps) => {
-  const ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+const TodoItem = ({ todo }: { todo: Todo }) => {
+  const { setTodoState, updateTodoState } = useTodoStore();
 
   const handleCheckBoxChange = async () => {
     const newTodo = {
       ...todo,
       status: todo.status === "completed" ? "pending" : "completed",
-    } as Todo;
+    };
 
-    // prettier-ignore
-    const response = await fetch(
-      `${ENDPOINT}/todos?id=${todo.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newTodo),
-      }
-    );
-    if (!response.ok) {
+    const success = await updateTodo(todo.id, newTodo as Todo);
+    if (!success) {
       alert("タスクを更新できませんでした");
       return;
     }
 
-    await fetchTodos();
+    const updatedTodo = await fetchTodo(todo.id);
+    if (updatedTodo === null) {
+      alert("タスクを取得できませんでした");
+      return;
+    }
+
+    updateTodoState(todo.id, updatedTodo);
+  };
+
+  const handleTitleClick = () => {
+    const newTodo = { ...todo, isEditing: true };
+    updateTodoState(todo.id, newTodo);
   };
 
   const handleDeleteButtonClick = async () => {
-    // prettier-ignore
-    const response = await fetch(
-      `${ENDPOINT}/todos?id=${todo.id}`,
-      {
-        method: "DELETE",
-      }
-    );
-    if (!response.ok) {
+    const success = await deleteTodo(todo.id);
+    if (!success) {
       alert("タスクを削除できませんでした");
       return;
     }
 
-    await fetchTodos();
+    const todos = await fetchTodos();
+    if (todos.length === 0) {
+      alert("タスクを取得できませんでした");
+      return;
+    }
+
+    setTodoState(todos);
   };
 
   return (
@@ -61,10 +59,7 @@ const TodoItem = ({ todo, fetchTodos, updateTodo }: TodoItemProps) => {
           py-3 ms-2 text-lg flex-grow
           ${todo.status === "completed" ? "line-through text-gray-500" : ""}
         `}
-        onClick={() => {
-          const newTodo = { ...todo, isEditing: true };
-          updateTodo(todo.id, newTodo);
-        }}
+        onClick={handleTitleClick}
       >
         {todo.title}
       </div>

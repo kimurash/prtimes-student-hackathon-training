@@ -1,11 +1,9 @@
+import { createTodo, fetchTodos, TodoRequest } from "@/api/todo";
+import { useTodoStore } from "@/stores/todos";
 import { useState } from "react";
 
-interface TodoInputComponentProps {
-  fetchTodos: () => Promise<void>;
-}
-
-export const TodoInputComponent = ({ fetchTodos }: TodoInputComponentProps) => {
-  const ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+export const TodoInputComponent = () => {
+  const { setTodoState } = useTodoStore();
   const [todoTitle, setTodoTitle] = useState<string>("");
 
   const handleAddButtonClick = async () => {
@@ -19,24 +17,21 @@ export const TodoInputComponent = ({ fetchTodos }: TodoInputComponentProps) => {
       status: "pending",
     };
 
-    // prettier-ignore
-    const response = await fetch(
-      `${ENDPOINT}/todos`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(todo),
-      }
-    );
-    if (!response.ok) {
+    const success = await createTodo(todo as TodoRequest);
+    if (!success) {
       alert("タスクを追加できませんでした");
       return;
     }
 
     setTodoTitle("");
-    await fetchTodos();
+
+    const todos = await fetchTodos();
+    if (todos.length === 0) {
+      alert("タスクを取得できませんでした");
+      return;
+    }
+
+    setTodoState(todos);
   };
 
   return (
