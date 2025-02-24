@@ -4,6 +4,7 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
 // データベース接続情報
 $DB_CONFIG = [
