@@ -1,6 +1,6 @@
 interface Todo {
-  id: string;
+  id: number;
   title: string;
-  isCompleted: boolean;
+  status: "pending" | "active" | "completed";
   isEditing: boolean;
 }
