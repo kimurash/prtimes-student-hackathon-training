@@ -23,7 +23,7 @@ export const fetchTodos = async () => {
     }
   );
   if (!response.ok) {
-    return [];
+    return null;
   }
 
   const resBody: TodoResponse = await response.json();

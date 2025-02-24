@@ -38,7 +38,7 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
     }
 
     const todos = await fetchTodos();
-    if (todos.length === 0) {
+    if (todos === null) {
       alert("タスクを取得できませんでした");
       return;
     }
