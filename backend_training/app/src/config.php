@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: http://localhost:5173');
 
 // データベース接続情報
 $DB_CONFIG = [
