@@ -5,12 +5,12 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
   const { setTodoState, updateTodoState } = useTodoStore();
 
   const handleCheckBoxChange = async () => {
-    const newTodo = {
+    const newTodo: Todo = {
       ...todo,
       status: todo.status === "completed" ? "pending" : "completed",
     };
 
-    const success = await updateTodo(todo.id, newTodo as Todo);
+    const success = await updateTodo(todo.id, newTodo);
     if (!success) {
       alert("タスクを更新できませんでした");
       return;

@@ -12,12 +12,12 @@ export const TodoInputComponent = () => {
       return;
     }
 
-    const todo = {
+    const todo: TodoRequest = {
       title: todoTitle,
       status: "pending",
     };
 
-    const success = await createTodo(todo as TodoRequest);
+    const success = await createTodo(todo);
     if (!success) {
       alert("タスクを追加できませんでした");
       return;
