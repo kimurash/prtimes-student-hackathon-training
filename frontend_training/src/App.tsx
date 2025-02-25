@@ -1,40 +1,31 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { fetchTodos } from "./api/todo";
 import "./App.css";
 import TodoInputComponent from "./components/todo/input/TodoInputComponent";
 import TodoListComponent from "./components/todo/list/TodoListComponent";
+import { useTodoStore } from "./stores/todos";
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { setTodoState } = useTodoStore();
 
-  const appendTodo = (todo: Todo) => {
-    setTodos((prevTodos) => {
-      return [...prevTodos, todo];
-    });
-  };
+  useEffect(() => {
+    const initialFetchTodos = async () => {
+      const todos = await fetchTodos();
+      if (todos === null) {
+        alert("タスクを取得できませんでした");
+        return;
+      }
+      setTodoState(todos);
+    };
 
-  const updateTodo = (todoId: string, newTodo: Todo) => {
-    setTodos((prevTodos) => {
-      return prevTodos.map((prevTodo) => {
-        if (prevTodo.id === todoId) {
-          return newTodo;
-        } else {
-          return prevTodo;
-        }
-      });
-    });
-  };
-
-  const removeTodo = (todoId: string) => {
-    setTodos((prevTodos) => {
-      return prevTodos.filter((prevTodo) => prevTodo.id !== todoId);
-    });
-  };
+    initialFetchTodos();
+  }, []);
 
   return (
     <>
       <h1 className="text-3xl">TODOアプリ</h1>
-      <TodoInputComponent appendTodo={appendTodo} />
-      <TodoListComponent todos={todos} updateTodo={updateTodo} removeTodo={removeTodo} />
+      <TodoInputComponent />
+      <TodoListComponent />
     </>
   );
 }

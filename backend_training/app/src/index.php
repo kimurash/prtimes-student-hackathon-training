@@ -27,6 +27,9 @@ $routes = [
     ],
     'DELETE' => [
         '#^/todos\?id=(\d+)$#' => 'handleDeleteTodo',
+    ],
+    'OPTIONS' => [
+        '#^.*$#' => 'handleOptions'
     ]
 ];
 
@@ -77,5 +80,17 @@ function handleHealthCheck(PDO $pdo): void
             'error' => $e->getMessage()
         ]);
     }
+    exit;
+}
+
+/**
+ * OPTIONS リクエストを処理する
+ *
+ * @return void
+ */
+function handleOptions(): void
+{
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
     exit;
 }
