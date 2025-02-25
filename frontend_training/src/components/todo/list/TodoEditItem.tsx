@@ -1,4 +1,4 @@
-import { fetchTodo, updateTodo } from "@/api/todo";
+import { fetchTodoById, updateTodo } from "@/api/todo";
 import { useTodoStore } from "@/stores/todos";
 import { useState } from "react";
 
@@ -20,7 +20,7 @@ const TodoEditItem = ({ todo }: { todo: Todo }) => {
       return;
     }
 
-    const updatedTodo = await fetchTodo(todo.id);
+    const updatedTodo = await fetchTodoById(todo.id);
     if (updatedTodo === null) {
       alert("タスクを取得できませんでした");
       return;

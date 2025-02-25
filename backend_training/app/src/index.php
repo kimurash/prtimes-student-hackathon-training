@@ -85,7 +85,6 @@ function handleHealthCheck(PDO $pdo): void
 
 /**
  * OPTIONS リクエストを処理する
- * CORSヘッダーを設定して 200 OK レスポンスを返す
  *
  * @return void
  */

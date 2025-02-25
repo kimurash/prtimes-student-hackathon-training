@@ -41,7 +41,7 @@ export const fetchTodos = async () => {
   return todos;
 };
 
-export const fetchTodo = async (todoId: number) => {
+export const fetchTodoById = async (todoId: number) => {
   // prettier-ignore
   const response = await fetch(
     `${ENDPOINT}/todos/${todoId}`,
